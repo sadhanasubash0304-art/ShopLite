@@ -1,0 +1,66 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1310">
+  <title>ShopLite â€” Store dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview"><span class="brand-mark">S</span><span>shop<span class="brand-light">lite</span></span></a>
+      <div class="store-label">WORKSPACE</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <a class="nav-link active" href="/"><span class="nav-icon">D</span> Dashboard</a>
+        <a class="nav-link" href="/inventory.html"><span class="nav-icon">I</span> Inventory</a>
+        <a class="nav-link" href="/billing.html"><span class="nav-icon">B</span> Billing</a>
+        
+      </nav>
+      <div class="sidebar-bottom"><div class="help-badge">âœ³</div><div><strong>Need a hand?</strong><span>Your shop, made simple.</span></div></div>
+      <div class="sidebar-foot">SHOPLITE <span>â€¢</span> STORE MANAGEMENT</div>
+    </aside>
+
+    <main class="main-content" id="overview">
+      <header class="topbar"><div class="mobile-brand"><span class="brand-mark">S</span> ShopLite</div><div class="breadcrumb">Workspace <span>/</span> <strong>Overview</strong></div><div class="top-actions"><span class="live-indicator"><i></i> Store is live</span><div class="avatar">S</div></div></header>
+      <section class="welcome-row"><div><p class="eyebrow" id="today-label">YOUR STORE AT A GLANCE</p><h1>Good business starts here<span>.</span></h1><p class="subheading">A clear view of your products, stock and sales.</p></div><button class="button button-primary" id="add-product-top"><span>ï¼‹</span> Add product</button></section>
+
+      <section class="stats-grid" aria-label="Store summary">
+        <article class="stat-card"><div class="stat-top"><span class="stat-label">Total products</span><span class="stat-icon icon-purple">â–¦</span></div><div class="stat-value" id="stat-products">â€”</div><div class="stat-note">In your inventory</div></article>
+        <article class="stat-card"><div class="stat-top"><span class="stat-label">Needs restocking</span><span class="stat-icon icon-amber">â†—</span></div><div class="stat-value" id="stat-low">â€”</div><div class="stat-note">At or below reorder level</div></article>
+        <article class="stat-card sales-card"><div class="stat-top"><span class="stat-label">Today's sales</span><span class="stat-icon icon-green">â‚¹</span></div><div class="stat-value" id="stat-sales">â‚¹0.00</div><div class="stat-note">Finalized bills today</div></article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel inventory-panel" id="inventory">
+          <div class="panel-heading"><div><p class="eyebrow">YOUR CATALOG</p><h2>Inventory <span class="count-pill" id="product-count">0</span></h2></div><button class="button button-quiet" id="refresh-products" title="Refresh inventory">â†» <span>Refresh</span></button></div>
+          <div class="table-tools"><label class="search-box"><span>âŒ•</span><input id="search" type="search" placeholder="Search productsâ€¦" aria-label="Search products"></label><button class="filter-button" id="low-stock-filter">âš‘ <span>Low stock</span></button></div>
+          <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>PRICE</th><th>IN STOCK</th><th>STATUS</th><th></th></tr></thead><tbody id="product-rows"><tr><td colspan="5" class="loading">Loading your inventoryâ€¦</td></tr></tbody></table></div>
+          <div class="table-footer"><span id="table-summary">Showing 0 products</span><span class="table-foot-right">Stock updates as you sell <span>â†—</span></span></div>
+        </article>
+
+        <aside class="right-column">
+          <article class="panel action-panel"><p class="eyebrow">QUICK ACTION</p><h2>Make it happen.</h2><p class="panel-copy">Keep your store moving with a few quick actions.</p><button class="quick-action" id="add-product-action"><span class="action-icon purple">ï¼‹</span><span><strong>Add a product</strong><small>Grow your catalog</small></span><b>â†’</b></button><button class="quick-action" id="create-bill-action"><span class="action-icon green">â–¤</span><span><strong>Create a bill</strong><small>Ring up a sale</small></span><b>â†’</b></button></article>
+          <article class="tip-card"><div class="tip-icon">âœ¦</div><div><p class="eyebrow">A LITTLE TIP</p><p>Keep an eye on low stock so your bestsellers are always ready to go.</p><a href="#inventory" id="view-low-stock">Review stock <span>â†’</span></a></div></article>
+        </aside>
+      </section>
+      <section class="panel billing-panel" id="billing">
+        <div class="panel-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Billing <span class="count-pill" id="bill-count">0</span></h2></div><button class="button button-primary" id="new-bill-button"><span>ï¼‹</span> New bill</button></div>
+        <div class="table-wrap"><table><thead><tr><th>BILL</th><th>DATE</th><th>ITEMS</th><th>TOTAL</th><th>STATUS</th><th></th></tr></thead><tbody id="bill-rows"><tr><td colspan="6" class="loading">Loading billsâ€¦</td></tr></tbody></table></div>
+        <div class="table-footer"><span id="bill-summary">Recent bills</span><span class="table-foot-right">Only finalized bills count toward sales</span></div>
+      </section>
+      <footer class="page-footer"><span>Made for the people who make shops special.</span><span>SHOPLITE <b>â€¢</b> 2026</span></footer>
+    </main>
+  </div>
+
+  <dialog class="modal" id="product-modal"><form id="product-form"><div class="modal-head"><div><p class="eyebrow">INVENTORY</p><h2>Add a product</h2></div><button class="close-button" type="button" data-close="product-modal" aria-label="Close">Ã—</button></div><label>Product name<input name="name" required maxlength="120" placeholder="e.g. Arabica coffee beans"></label><div class="form-row"><label>Price (â‚¹)<input name="price" type="number" min="0.01" step="0.01" required placeholder="0.00"></label><label>Starting stock<input name="stockQuantity" type="number" min="0" step="1" required value="0"></label></div><label>Reorder threshold<input name="reorderThreshold" type="number" min="0" step="1" required value="5"></label><p class="form-error" id="product-error" role="alert"></p><div class="modal-actions"><button type="button" class="button button-quiet" data-close="product-modal">Cancel</button><button class="button button-primary" type="submit">Save product <span>â†’</span></button></div></form></dialog>
+
+  <dialog class="modal" id="bill-modal"><form id="bill-form"><div class="modal-head"><div><p class="eyebrow">CHECKOUT</p><h2>Create a bill</h2></div><button class="close-button" type="button" data-close="bill-modal" aria-label="Close">Ã—</button></div><p class="modal-copy">Choose a product and quantity. Stock changes when you finalize the bill.</p><div id="bill-lines"></div><button type="button" class="add-line" id="add-bill-line">ï¼‹ Add another item</button><p class="form-error" id="bill-error" role="alert"></p><div class="modal-actions"><button type="button" class="button button-quiet" data-close="bill-modal">Cancel</button><button class="button button-primary" type="submit">Create bill <span>â†’</span></button></div></form></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+const $ = selector => document.querySelector(selector), $$ = selector => [...document.querySelectorAll(selector)];
+const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(Number(value || 0));
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const state = { bills: [], products: [], query: "", filter: "all", editId: null };
+async function call(url, options = {}) { const res = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...options.headers } }); const raw = await res.text(); let data; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; } if (!res.ok) throw new Error(data?.message || data?.error || `Request failed (${res.status})`); return data; }
+function notify(text) { const toast = $("#toast"); toast.textContent = text; toast.classList.add("show"); clearTimeout(notify.timer); notify.timer = setTimeout(() => toast.classList.remove("show"), 3000); }
+function localToday() { const now = new Date(); return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+async function load() {
+  try {
+    [state.bills, state.products] = await Promise.all([call("/api/bills"), call("/api/products")]);
+    const today = localToday(); const todayBills = state.bills.filter(b => String(b.billDate || "").slice(0, 10) === today);
+    $("#today-bills").textContent = todayBills.length; $("#draft-bills").textContent = state.bills.filter(b => !b.finalized).length;
+    $("#today-sales").textContent = money(await call(`/api/bills/sales?date=${today}`)); render();
+  } catch (error) { $("#bills").innerHTML = `<tr><td colspan="6" class="empty-state"><strong>Could not load bills</strong>${esc(error.message)}</td></tr>`; }
+}
+function render() {
+  const shown = [...state.bills].sort((a,b) => b.id-a.id).filter(b => (state.filter === "all" || (state.filter === "finalized" ? b.finalized : !b.finalized)) && (`${b.id} ${(b.items||[]).map(i=>i.product?.name).join(" ")}`).toLowerCase().includes(state.query));
+  $("#bill-count").textContent = shown.length; $("#billing-summary").textContent = `Showing ${shown.length} of ${state.bills.length} bills`;
+  $("#bills").innerHTML = shown.length ? shown.map(b => { const items = (b.items||[]).map(i => `${esc(i.product?.name || "Product")} × ${Number(i.quantity)}`).join(", "); const date = b.billDate ? new Date(b.billDate).toLocaleString() : "—"; const actions = b.finalized ? '<span style="color:#9ba29c">Completed</span>' : `<div class="bill-actions"><button data-edit="${Number(b.id)}">Edit</button><button data-finalize="${Number(b.id)}">Finalize</button><button class="delete-bill" data-delete="${Number(b.id)}">Delete</button></div>`; return `<tr><td class="product-name">#${Number(b.id)}</td><td>${esc(date)}</td><td>${items || "—"}</td><td class="price">${money(b.totalAmount)}</td><td><span class="bill-status ${b.finalized ? "finalized" : "draft"}">${b.finalized ? "Finalized" : "Draft"}</span></td><td>${actions}</td></tr>`; }).join("") : '<tr><td colspan="6" class="empty-state"><strong>No bills found</strong>Create a bill or change the filter.</td></tr>';
+}
+function addLine(item) { const row = document.createElement("div"); row.className = "bill-line"; const choices = state.products.map(p => `<option value="${Number(p.id)}">${esc(p.name)} — ${money(p.price)} (${Number(p.stockQuantity)} in stock)</option>`).join(""); row.innerHTML = `<label>Product<select required><option value="">Choose a product</option>${choices}</select></label><label>Qty<input type="number" min="1" step="1" value="${Number(item?.quantity || 1)}" required></label><button class="remove-line" type="button" aria-label="Remove item">×</button>`; if (item?.product?.id) $("select", row).value = item.product.id; $(".remove-line", row).addEventListener("click", () => { if ($$(".bill-line").length > 1) row.remove(); else $("select", row).value = ""; }); $("#bill-lines").append(row); }
+function openNew() { state.editId = null; $("#bill-lines").replaceChildren(); addLine(); $("#bill-error").textContent = ""; $("#bill-form h2").textContent = "Create a bill"; $("#bill-modal").showModal(); }
+$("#new-bill").addEventListener("click", openNew); $("#add-line").addEventListener("click", () => addLine()); $("#refresh-bills").addEventListener("click", load);
+$("#bill-search").addEventListener("input", e => { state.query = e.target.value.trim().toLowerCase(); render(); }); $("#bill-status").addEventListener("change", e => { state.filter = e.target.value; render(); });
+$("#bills").addEventListener("click", async e => { const edit=e.target.closest("[data-edit]"), fin=e.target.closest("[data-finalize]"), del=e.target.closest("[data-delete]"); try {
+  if (edit) { const bill = state.bills.find(b => b.id === Number(edit.dataset.edit)); if (!bill) return; state.editId = bill.id; $("#bill-lines").replaceChildren(); (bill.items||[]).forEach(i => addLine(i)); $("#bill-form h2").textContent = `Edit bill #${bill.id}`; $("#bill-modal").showModal(); }
+  if (fin) { if (!confirm("Finalize this bill and deduct stock?")) return; await call(`/api/bills/${fin.dataset.finalize}/finalize`, { method: "POST" }); notify("Bill finalized"); await load(); }
+  if (del) { if (!confirm("Delete this draft bill?")) return; await call(`/api/bills/${del.dataset.delete}`, { method: "DELETE" }); notify("Draft bill deleted"); await load(); }
+} catch (error) { notify(error.message); } });
+$("#bill-form").addEventListener("submit", async e => { e.preventDefault(); const items = $$(".bill-line").map(row => ({ productId: Number($("select",row).value), quantity: Number($("input",row).value) })); if (items.some(i => !i.productId || !i.quantity)) { $("#bill-error").textContent = "Choose a product and quantity for each line."; return; } try { const editing = state.editId !== null; await call(editing ? `/api/bills/${state.editId}` : "/api/bills", { method: editing ? "PUT" : "POST", body: JSON.stringify({ items }) }); $("#bill-modal").close(); notify(editing ? "Bill updated" : "Bill saved as a draft"); state.editId = null; await load(); } catch (error) { $("#bill-error").textContent = error.message; } });
+for (const id of ["close-bill", "cancel-bill"]) $("#"+id).addEventListener("click", () => $("#bill-modal").close()); $("#bill-modal").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+load();
